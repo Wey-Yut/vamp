@@ -31,7 +31,8 @@ class VamRoll :
         crit_hunger = 0
         rolled_dices_normal = []
         rolled_dices_hunger = []
-
+        
+        # normal dice trow
         for d in range(self.normal_dice) :
             rolled = randint(1, 10)
             rolled_dices_normal += [rolled]
@@ -40,7 +41,8 @@ class VamRoll :
                 crit_normal += 1
             elif rolled >= 6 :
                 successes += 1
-
+                
+        # hunger dice trow
         for d in range(self.hunger_dice) :
             rolled = randint(1, 10)
             rolled_dices_hunger += [rolled]
@@ -63,7 +65,8 @@ class VamRoll :
                      'rolled_dices_normal' : rolled_dices_normal,
                      'rolled_dices_hunger' : rolled_dices_hunger,
                      'status' : 0}
-
+                     
+        # Determining roll outcome
         if successes >= self.difficulty :
             if successes_crit > 0 :
                 if crit_hunger != 0 :
@@ -89,7 +92,8 @@ class VamRoll :
                  'success_roll' : 0,
                  'bestial_fail_roll' : 0,
                  'fail_roll' : 0}
-
+                 
+        # rolling for a lot of times to gather data
         for r in range(reps) :
             roll = VamRoll.__roll_met(self)
             roll_status = roll['status']
