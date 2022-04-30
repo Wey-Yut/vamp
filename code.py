@@ -1,6 +1,7 @@
 from random import randint
 
 
+# noinspection PyStringFormat
 class VamRoll :
 
     def __init__(self, dice_pool, hunger, difficulty) :
@@ -24,7 +25,7 @@ class VamRoll :
 
         self.rolled = None
 
-        def __roll_met(self, prerolled=None) :
+    def __roll_met(self, prerolled=None):
 
         successes = 0
         fail = 0
@@ -38,7 +39,7 @@ class VamRoll :
                 rolled = randint(1, 10)
                 rolled_dices_normal += [rolled]
         else :
-            rolled_dices_normal = prerolled            
+            rolled_dices_normal = prerolled
 
         for rolled in rolled_dices_normal :
             if rolled == 10 :
@@ -122,7 +123,7 @@ class VamRoll :
             how_many_can_reroll = self.normal_dice[:]
 
         print(self.rolled['rolled_dices_normal'])
-        which_reroll = input('Type results to reroll.\n Separate by space. \n'
+        which_reroll = input('Type results to reroll.\nSeparate by space. \n'
                              'You can choose %d dices or less\n' % how_many_can_reroll)
 
         which_reroll = which_reroll.split(' ')        
@@ -153,13 +154,13 @@ class VamRoll :
             print('BESTIAL SUCCESS')
 
         elif self.rolled['status'] == 'success_roll' :
-            print('Success')
+            print('SUCCESS')
 
         elif self.rolled['status'] == 'bestial_fail_roll' :
             print('BESTIAL FAILURE')
 
         elif self.rolled['status'] == 'fail_roll' :
-            print('Fail')
+            print('FAILED')
 
     def print_probability(self) :
         if self.chance_fail is None :
