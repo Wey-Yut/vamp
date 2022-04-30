@@ -36,7 +36,7 @@ class VamRoll :
         self.chance_bestial_crit = None
         self.chance_normal_crit = None
 
-    # Used for rolls for one trow and probability
+    # Used for rolls for both one trow and probability
     def __roll_met(self) :
 
         successes = 0
