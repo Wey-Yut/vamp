@@ -17,15 +17,27 @@ class VamRoll :
 
         self.normal_dice = dice_pool - self.hunger_dice
 
+        self.prerolled = False
+
+        # Attributes of one random trow
+        self.successes = None
+        self.successes_crit = None
+        self.fail = None
+        self.crit_normal = None
+        self.crit_hunger = None
+        self.rolled_dices_normal = None
+        self.rolled_dices_hunger = None
+        self.status = None
+
+        # Chances of this configuration overall
         self.chance_bestial_fail = None
         self.chance_fail = None
         self.chance_normal_success = None
         self.chance_bestial_crit = None
         self.chance_normal_crit = None
 
-        self.rolled = None
-
-    def __roll_met(self, prerolled=None):
+    # Used for rolls for one trow and probability
+    def __roll_met(self) :
 
         successes = 0
         fail = 0
@@ -34,13 +46,23 @@ class VamRoll :
         rolled_dices_normal = []
         rolled_dices_hunger = []
 
-        if prerolled is None :
+        # Only used in reroll (willpower use)
+        if self.prerolled :
+            rolled_dices_normal = self.rolled_dices_normal
+            rolled_dices_hunger = self.rolled_dices_hunger
+
+        # Used for everything else
+        else :
+
             for d in range(self.normal_dice) :
                 rolled = randint(1, 10)
                 rolled_dices_normal += [rolled]
-        else :
-            rolled_dices_normal = prerolled
 
+            for d in range(self.hunger_dice) :
+                rolled = randint(1, 10)
+                rolled_dices_hunger += [rolled]
+
+        # For normal dice
         for rolled in rolled_dices_normal :
             if rolled == 10 :
                 successes += 1
@@ -48,9 +70,8 @@ class VamRoll :
             elif rolled >= 6 :
                 successes += 1
 
-        for d in range(self.hunger_dice) :
-            rolled = randint(1, 10)
-            rolled_dices_hunger += [rolled]
+        # for hunger dice
+        for rolled in rolled_dices_hunger :
             if rolled == 10 :
                 successes += 1
                 crit_hunger += 1
@@ -62,14 +83,15 @@ class VamRoll :
         successes_crit = ((crit_hunger + crit_normal) // 2) * 2
         successes += successes_crit
 
-        roll_info = {'successes' : successes,
+        roll_info = {
+                     'successes' : successes,
                      'successes_crit' : successes_crit,
                      'fail' : fail,
                      'crit_normal' : crit_normal,
                      'crit_hunger' : crit_hunger,
                      'rolled_dices_normal' : rolled_dices_normal,
                      'rolled_dices_hunger' : rolled_dices_hunger,
-                     'status' : 0}
+                     }
 
         # failure
         if successes < self.difficulty :
@@ -94,8 +116,16 @@ class VamRoll :
 
         return roll_info
 
-    def roll(self, prerolled=None) :
-        self.rolled = VamRoll.__roll_met(self, prerolled)
+    def roll(self) :
+        rolled = VamRoll.__roll_met(self)
+        self.successes = rolled['successes']
+        self.successes_crit = rolled['successes_crit']
+        self.fail = rolled['fail']
+        self.crit_normal = rolled['crit_normal']
+        self.crit_hunger = rolled['crit_hunger']
+        self.rolled_dices_normal = rolled['rolled_dices_normal']
+        self.rolled_dices_hunger = rolled['rolled_dices_hunger']
+        self.status = rolled['status']
 
     def probability(self, reps=10000) :
         rolls = {'normal_crit_roll' : 0,
@@ -115,51 +145,63 @@ class VamRoll :
         self.chance_fail = rolls['fail_roll'] * 100 / reps
         self.chance_bestial_fail = rolls['bestial_fail_roll'] * 100 / reps
 
-    def willpower(self):
+    def willpower(self) :
 
         if self.dice_pool >= 3 :
             how_many_can_reroll = 3
         else :
-            how_many_can_reroll = self.normal_dice[:]
+            how_many_can_reroll = self.normal_dice
 
-        print(self.rolled['rolled_dices_normal'])
+        print(self.rolled_dices_normal)
         which_reroll = input('Type results to reroll.\nSeparate by space. \n'
                              'You can choose %d dices or less\n' % how_many_can_reroll)
 
-        which_reroll = which_reroll.split(' ')        
-        new_dices_rolled = self.rolled['rolled_dices_normal'][:]
-        for dice in which_reroll :            
-            dice = int(dice)
-            new_dices_rolled.remove(dice)
+        which_reroll = which_reroll.split(' ')
+
+        while len(which_reroll) > how_many_can_reroll:
+            which_reroll = input('Type results to reroll.\nSeparate by space. \n'
+                                 'YOU CAN CHOOSE %d DICES OR LESS\n' % how_many_can_reroll)
+            which_reroll = which_reroll.split(' ')
+
+        # Should work with aliasing, but I never know how it works, so I avoid it by all cost.
+        new_dices_rolled = self.rolled_dices_normal[:]
+        for dice in which_reroll :
+            new_dices_rolled.remove(int(dice))
             new_dices_rolled.append(randint(1, 10))
 
-        VamRoll.roll(self, new_dices_rolled)
+        self.rolled_dices_normal = new_dices_rolled[:]
+
+        self.prerolled = True
+
+        VamRoll.roll(self)
         VamRoll.print_roll(self)
 
+        self.prerolled = False
+
     def print_roll(self) :
-        if self.rolled is None :
+        if self.status is None :
             VamRoll.roll(self)
 
         print("Dice pool:", self.dice_pool)
         print('Hunger:', self.hunger)
         print('Difficulty:', self.difficulty)
-        print('Normal dice rolled:', self.rolled['rolled_dices_normal'])
-        print('hunger dice rolled: ', self.rolled['rolled_dices_hunger'])
-        print('Successes:', self.rolled['successes'])
+        print('Normal dice rolled:', self.rolled_dices_normal)
+        print('hunger dice rolled: ', self.rolled_dices_hunger)
+        print('Successes:', self.successes)
 
-        if self.rolled['status'] == 'normal_crit_roll' :
+        if self.status == 'normal_crit_roll' :
             print('CRITICAL SUCCESS')
 
-        elif self.rolled['status'] == 'bestial_crit_roll' :
+        elif self.status == 'bestial_crit_roll' :
             print('BESTIAL SUCCESS')
 
-        elif self.rolled['status'] == 'success_roll' :
+        elif self.status == 'success_roll' :
             print('SUCCESS')
 
-        elif self.rolled['status'] == 'bestial_fail_roll' :
+        elif self.status == 'bestial_fail_roll' :
             print('BESTIAL FAILURE')
 
-        elif self.rolled['status'] == 'fail_roll' :
+        elif self.status == 'fail_roll' :
             print('FAILED')
 
     def print_probability(self) :
@@ -197,10 +239,10 @@ if __name__ == '__main__' :
             print('')
             test_vampire.print_probability()
 
-            control = input('To use willpower to reroll type: "W"\n '
+            control = input('To use willpower to reroll type: "W"\n'
                             'To roll again type "R\n'
                             'To end type "E"\n')
-    
+
             if control == 'W' or control == 'w' :
                 test_vampire.willpower()
                 control = input('To roll again type "R\n'
